@@ -25,6 +25,14 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class TextFileReader {
 
+	/**
+	 * The default value for uninitialised properties of the text file.
+	 */
+	private static final int DEFAULT = -1;
+	/**
+	 * Predicate for filtering non blank lines in a file.
+	 */
+	private static final Predicate<String> IS_NOT_BLANK = line -> StringUtils.isNotBlank(line);
 	private final File textFile;
 
 	public static void main(String[] filePaths) {
@@ -52,35 +60,34 @@ public class TextFileReader {
 	/**
 	 * Creates a TextFileReader with the specifed {@link File}.
 	 * 
-	 * @param file the text file to be analysed by the reader
+	 * @param textFile the text file to be analysed by the reader
 	 */
-	public TextFileReader(File file) {
-		if (file.isFile()) {
-			textFile = file;
+	public TextFileReader(File textFile) {
+		if (textFile.isFile()) {
+			this.textFile = textFile;
 		} else {
-			throw new IllegalArgumentException(String.format("%s is not a valid file.", file.getPath()));
+			throw new IllegalArgumentException(String.format("%s is not a valid file.", textFile.getPath()));
 		}
 	}
 
 	/**
-	 * Calculates the average length of all words found in the current document, to a single decimal
-	 * place.
+	 * Calculates the average length of all words found in the text file, to a single decimal place.
 	 * 
 	 * @return a double representing the average word length, rounded to one decimal place.
-	 * @throws FileNotFoundException if the current text file cannot be found.
+	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	public double getAverageWordLength() throws FileNotFoundException {
 		return getAverageWordLength(null);
 	}
 
 	/**
-	 * Calculates the average length of all words found in the current document, to a single decimal
-	 * place. A delimiter other than the default whitespace can be specified.
+	 * Calculates the average length of all words found in the text file, to a single decimal place.
+	 * A delimiter other than the default whitespace can be specified.
 	 * 
 	 * @param delimiter the String delimiter to be used to distinguish words. Set as null to use the
 	 *            default whitespace delimiter.
 	 * @return a double representing the average word length, rounded to one decimal place.
-	 * @throws FileNotFoundException if the current text file cannot be found.
+	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	public double getAverageWordLength(final String delimiter) throws FileNotFoundException {
 		List<String> words = getWords(delimiter);
@@ -93,17 +100,17 @@ public class TextFileReader {
 	}
 
 	/**
-	 * Calculates the lines in the current document and returns the value as an integer.
+	 * Calculates the lines in the text file and returns the value as an integer.
 	 * 
 	 * @param ignoreBlankLines when set to true, lines of whitespace will not be included in the
 	 *            final count.
-	 * @return the number of lines in the document.
-	 * @throws IOException an error reading the current document.
+	 * @return the number of lines in the file.
+	 * @throws IOException an error reading the text file.
 	 */
 	public int getLineCount(final boolean ignoreBlankLines) throws IOException {
 		try (Stream<String> lines = Files.lines(textFile.toPath())) {
 			if (ignoreBlankLines) {
-				return (int) lines.filter(isNotBlank()).count();
+				return (int) lines.filter(IS_NOT_BLANK).count();
 			} else {
 				return (int) lines.count();
 			}
@@ -111,19 +118,19 @@ public class TextFileReader {
 	}
 
 	/**
-	 * Finds the most commonly used letter in the current document.
+	 * Finds the most commonly used letter in the text file.
 	 * 
 	 * @return most commonly used letter as a char.
-	 * @throws IOException an error reading the current document.
-	 * @throws FileNotFoundException if the current text file cannot be found.
+	 * @throws IOException an error reading the text file.
+	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	public char getMostCommonLetter() throws FileNotFoundException, IOException {
 		Map<Character, Integer> letters = new HashMap<>();
 		try (BufferedReader docReader = new BufferedReader(new FileReader(textFile))) {
 			int charInt = 0;
-			Character mostCommon = null;
+			Character mostCommonLetter = null;
 			int mostCommonCount = 0;
-			while ((charInt = docReader.read()) != -1) {
+			while ((charInt = docReader.read()) != DEFAULT) {
 				Character character = Character.toLowerCase((char) charInt);
 				int letterCount = 1;
 				if (letters.containsKey(character)) {
@@ -134,45 +141,45 @@ public class TextFileReader {
 				}
 
 				if (letterCount > mostCommonCount) {
-					mostCommon = character;
+					mostCommonLetter = character;
 					mostCommonCount = letterCount;
 				}
 			}
-			return mostCommon;
+			return mostCommonLetter;
 		}
 	}
 
 	/**
-	 * Calculates the word count in the current document.
+	 * Calculates the word count in the text file.
 	 * 
-	 * @return the number of words in the document.
-	 * @throws FileNotFoundException if the current text file cannot be found.
+	 * @return the number of words in the file.
+	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	public int getWordCount() throws FileNotFoundException {
 		return getWords(null).size();
 	}
 
 	/**
-	 * Calculates the word count in the current document. The delimiter will default to whitespace
-	 * if a null or blank string argument is provided.
+	 * Calculates the word count in the text file. The delimiter will default to whitespace if a
+	 * null or blank string argument is provided.
 	 * 
-	 * @param delimiter used to distinguish "words" in a document. Leave as null to default to a
+	 * @param delimiter used to distinguish "words" in a file. Leave as null to default to a
 	 *            whitespace delimiter.
-	 * @return the number of words in the document.
-	 * @throws FileNotFoundException if the current text file cannot be found.
+	 * @return the number of words in the file.
+	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	public int getWordCount(final String delimiter) throws FileNotFoundException {
 		return getWords(delimiter).size();
 	}
 
 	/**
-	 * Gets the words from the current document, based on the provided delimiter (defaulting to
-	 * whitespace if null or blank), and returns them in a {@link List}.
+	 * Gets the words from the text file, based on the provided delimiter (defaulting to whitespace
+	 * if null or blank), and returns them in a {@link List}.
 	 * 
-	 * @param delimiter used to distinguish "words" in a document. Leave as null to default to a
+	 * @param delimiter used to distinguish "words" in a file. Leave as null to default to a
 	 *            whitespace delimiter.
-	 * @return a {@link List} containing all the words in the current document.
-	 * @throws FileNotFoundException if the current text file cannot be found.
+	 * @return a {@link List} containing all the words in the text file.
+	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	private List<String> getWords(final String delimiter) throws FileNotFoundException {
 		try (Scanner wordScanner = new Scanner(textFile)) {
@@ -185,15 +192,6 @@ public class TextFileReader {
 			}
 			return words;
 		}
-	}
-
-	/**
-	 * Predicate for non blank lines in a document.
-	 * 
-	 * @return true if the line is not blank (i.e. is whitespace only).
-	 */
-	private Predicate<String> isNotBlank() {
-		return line -> StringUtils.isNotBlank(line);
 	}
 
 	/**
