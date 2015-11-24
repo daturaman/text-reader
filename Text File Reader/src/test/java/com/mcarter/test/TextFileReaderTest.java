@@ -19,7 +19,8 @@ import org.perfidix.annotation.SkipBench;
 import com.mcarter.tools.TextFileReader;
 
 /**
- * Acceptance tests for {@link TextFileReader}.
+ * Acceptance tests for {@link TextFileReader}. The tests can also be run against the
+ * Perfidix/Perclipse benchmarking library.
  */
 @BenchClass(runs = 50)
 public class TextFileReaderTest {
@@ -82,7 +83,7 @@ public class TextFileReaderTest {
 	 * @throws URISyntaxException an error was encountered converting the URL of the resource to a
 	 *             URI.
 	 */
-	private File testDocument(String filename) throws URISyntaxException {
+	private File testDocument(final String filename) throws URISyntaxException {
 		return new File(this.getClass().getClassLoader().getResource(filename).toURI());
 	}
 }
