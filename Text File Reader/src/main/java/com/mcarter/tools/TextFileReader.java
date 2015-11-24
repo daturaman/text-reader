@@ -25,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class TextFileReader {
 
+	private final File textFile;
+
 	public static void main(String[] filePaths) {
 		if (filePaths.length == 0) {
 			throw new IllegalArgumentException("Please provided the path of at least one text file.");
@@ -46,8 +48,6 @@ public class TextFileReader {
 			}
 		}
 	}
-
-	private final File textFile;
 
 	/**
 	 * Creates a TextFileReader with the specifed {@link File}.
