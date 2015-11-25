@@ -21,13 +21,15 @@ import com.mcarter.tools.TextFileReader;
 /**
  * Acceptance tests for {@link TextFileReader}. The tests can also be run against the
  * Perfidix/Perclipse benchmarking library.
+ * 
+ * @author Michael Carter
  */
 @BenchClass(runs = 50)
 public class TextFileReaderTest {
 	private TextFileReader textFileReader;
 
 	/**
-	 * Initialise the {@link TextFileReader} under test with the default text file.
+	 * Initialise the {@code TextFileReader} under test with the default text file.
 	 * 
 	 * @throws URISyntaxException if the URL of the testDocument cannot be converted to a URI.
 	 */
@@ -56,8 +58,22 @@ public class TextFileReaderTest {
 	}
 
 	@Test
+	public void countsLinesInBlankFile() throws IOException, URISyntaxException {
+		textFileReader = new TextFileReader(testDocument("blankFile.txt"));
+		final int expectedLineCount = 0;
+		assertThat(textFileReader.getLineCount(false), is(equalTo(expectedLineCount)));
+	}
+
+	@Test
 	public void countsWhitespaceDelimitedWordsInPlainTextFile() throws IOException {
 		final int expectedWordCount = 477;
+		assertThat(textFileReader.getWordCount(), is(equalTo(expectedWordCount)));
+	}
+
+	@Test
+	public void countsWordsInBlankFile() throws IOException, URISyntaxException {
+		textFileReader = new TextFileReader(testDocument("blankFile.txt"));
+		final int expectedWordCount = 0;
 		assertThat(textFileReader.getWordCount(), is(equalTo(expectedWordCount)));
 	}
 
@@ -69,17 +85,32 @@ public class TextFileReaderTest {
 	}
 
 	@Test
-	public void findsMostUsedLetter() throws FileNotFoundException, IOException, URISyntaxException {
+	public void calculatesAverageWordLengthInBlankFile() throws FileNotFoundException, URISyntaxException {
+		textFileReader = new TextFileReader(testDocument("blankFile.txt"));
+		final double expectedAverage = 0.0;
+		assertThat(textFileReader.getAverageWordLength(), is(equalTo(expectedAverage)));
+	}
+
+	@Test
+	public void findsMostCommonLetter() throws FileNotFoundException, IOException, URISyntaxException {
 		textFileReader = new TextFileReader(testDocument("mostUsedLetter.txt"));
 		final char expectedLetter = 'b';
 		assertThat(textFileReader.getMostCommonLetter(), is(equalTo(expectedLetter)));
 	}
 
+	@Test
+	public void attemptsToFindMostCommonLetterInBlankFile()
+			throws FileNotFoundException, IOException, URISyntaxException {
+		textFileReader = new TextFileReader(testDocument("blankFile.txt"));
+		final char expectedLetter = Character.UNASSIGNED;
+		assertThat(textFileReader.getMostCommonLetter(), is(equalTo(expectedLetter)));
+	}
+
 	/**
-	 * Creates a {@link File} instance using the passed in filename.
+	 * Creates a {@code File} instance using the passed in filename.
 	 * 
 	 * @param filename name of the file to reference.
-	 * @return A {@link File} instance representing the entity specified by file.
+	 * @return A {@codeFile} instance representing the entity specified by file.
 	 * @throws URISyntaxException an error was encountered converting the URL of the resource to a
 	 *             URI.
 	 */

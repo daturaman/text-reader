@@ -8,9 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -18,17 +16,13 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * The TextFileReader takes a reference to a plain text file and generates a variety of statistics.
+ * The {@code TextFileReader} takes a reference to a plain text file and generates a variety of
+ * statistics. It is not currently suitable for use in multi-threaded environments.
  * 
  * @author Michael Carter
- *
  */
 public class TextFileReader {
 
-	/**
-	 * The default value for uninitialised properties of the text file.
-	 */
-	private static final int DEFAULT = -1;
 	/**
 	 * Predicate for filtering non blank lines in a file.
 	 */
@@ -95,8 +89,12 @@ public class TextFileReader {
 		for (String word : words) {
 			wordLengthSum += word.length();
 		}
-		final String oneDecimalPlace = "#.#";
-		return Double.parseDouble(new DecimalFormat(oneDecimalPlace).format(wordLengthSum / words.size()));
+		if (wordLengthSum > 0) {
+			final String oneDecimalPlace = "#.#";
+			return Double.parseDouble(new DecimalFormat(oneDecimalPlace).format(wordLengthSum / words.size()));
+		} else {
+			return wordLengthSum;
+		}
 	}
 
 	/**
@@ -125,27 +123,24 @@ public class TextFileReader {
 	 * @throws FileNotFoundException if the text file cannot be found.
 	 */
 	public char getMostCommonLetter() throws FileNotFoundException, IOException {
-		Map<Character, Integer> letters = new HashMap<>();
 		try (BufferedReader docReader = new BufferedReader(new FileReader(textFile))) {
-			int charInt = 0;
-			Character mostCommonLetter = null;
-			int mostCommonCount = 0;
-			while ((charInt = docReader.read()) != DEFAULT) {
-				Character character = Character.toLowerCase((char) charInt);
-				int letterCount = 1;
-				if (letters.containsKey(character)) {
-					letterCount = letters.get(character);
-					letters.put(character, ++letterCount);
+			int charAsInt = 0;
+			List<Letter> letters = new ArrayList<>();
+			while ((charAsInt = docReader.read()) != -1) {
+				Character character = Character.toLowerCase((char) charAsInt);
+				Letter letter = new Letter(character);
+				if (letters.contains(letter)) {
+					letters.get(letters.indexOf(letter)).letterCount++;
 				} else if (Character.isLetter(character)) {
-					letters.put(character, letterCount);
-				}
-
-				if (letterCount > mostCommonCount) {
-					mostCommonLetter = character;
-					mostCommonCount = letterCount;
+					letters.add(letter);
 				}
 			}
-			return mostCommonLetter;
+			if (letters.size() > 0) {
+				letters.sort((a, b) -> a.letterCount.compareTo(b.letterCount));
+				return letters.get(letters.size() - 1).letter;
+			} else {
+				return Character.UNASSIGNED;
+			}
 		}
 	}
 
@@ -195,10 +190,105 @@ public class TextFileReader {
 	}
 
 	/**
-	 * Returns the string representation of this TextFileReader and its underlying file.
+	 * Returns a string representation of this TextFileReader and its underlying file with the
+	 * format
+	 * <p>
+	 * TextFileReader [textFile=textFile]
+	 * </p>
+	 * 
+	 * @return a string representation of this TextFileReader.
 	 */
 	@Override
 	public String toString() {
 		return String.format("TextFileReader [textFile=%s]", textFile);
+	}
+
+	/**
+	 * Wrapper class for characters that also keeps a count of how many instances are in a text
+	 * file. Allows characters to be added to a collection and then sorted on this count value using
+	 * a comparator.
+	 * 
+	 * @author Michael Carter
+	 *
+	 */
+	private class Letter {
+		private Character letter;
+		private Integer letterCount = 1;
+
+		/**
+		 * Create a new {@code LetterValue} with the provided character.
+		 * 
+		 * @param letter the character represented by this {@code LetterValue}
+		 */
+		private Letter(Character letter) {
+			this.letter = letter;
+		}
+
+		/**
+		 * Returns a hash code for this {@code Letter} using its underlying character.
+		 * 
+		 * @return the hash code for this {@code Letter}.
+		 */
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((letter == null) ? 0 : letter.hashCode());
+			return result;
+		}
+
+		/**
+		 * Compares this {@code Letter} to the specified object using its underlying character.
+		 * 
+		 * @param obj the {@link Object} to compare this {@code Letter} against.
+		 * @return true if obj and this {@code Letter} are equal.
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (!(obj instanceof Letter)) {
+				return false;
+			}
+			Letter other = (Letter) obj;
+			if (!getOuterType().equals(other.getOuterType())) {
+				return false;
+			}
+			if (letter == null) {
+				if (other.letter != null) {
+					return false;
+				}
+			} else if (!letter.equals(other.letter)) {
+				return false;
+			}
+			return true;
+		}
+
+		/**
+		 * Generates a string representation of this {@code LetterValue} with the format
+		 * <p>
+		 * Letter [letter, letterCount]
+		 * </p>
+		 * 
+		 * @return a string representing this {@code LetterValue}
+		 */
+		@Override
+		public String toString() {
+			return String.format("Letter [letter=%s, letterCount=%s]", letter, letterCount);
+		}
+
+		/**
+		 * Convenience method for obtaining a reference to the enclosing class.
+		 * 
+		 * @return A reference to the enclosing class.
+		 */
+		private TextFileReader getOuterType() {
+			return TextFileReader.this;
+		}
 	}
 }
